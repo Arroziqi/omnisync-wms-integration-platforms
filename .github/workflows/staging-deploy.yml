@@ -1,0 +1,131 @@
+# ============================================================
+# staging-deploy.yml — Deploy to Staging VPS
+#
+# Triggers:
+#   1. Automatically after docker-build.yml succeeds on main
+#   2. Manually via workflow_dispatch (for rollback / re-deploy)
+#
+# Required Secrets (configure in repo Settings → Secrets):
+#   STAGING_HOST        — VPS IP or hostname
+#   STAGING_USER        — SSH user (e.g., ubuntu, deploy)
+#   STAGING_SSH_KEY     — Private SSH key (RSA/Ed25519)
+#   SLACK_WEBHOOK_URL   — (Optional) Slack incoming webhook URL
+# ============================================================
+
+name: Staging Deploy
+
+on:
+  workflow_run:
+    workflows: ['Docker Build & Push']
+    types:
+      - completed
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deploy'
+        required: false
+        default: 'Manual re-deploy'
+
+env:
+  DEPLOY_DIR: /opt/omnisync   # Directory on the VPS where docker-compose lives
+
+jobs:
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    # For workflow_run trigger: only proceed if the upstream workflow succeeded
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    environment:
+      name: staging
+      url: http://${{ secrets.STAGING_HOST }}
+
+    steps:
+      - name: Checkout repository (for compose files)
+        uses: actions/checkout@v4
+
+      - name: Copy compose files to staging VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          source: 'docker-compose.yml,docker-compose.dev.yml,.env.example,nginx/'
+          target: ${{ env.DEPLOY_DIR }}
+          overwrite: true
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ env.DEPLOY_DIR }}
+
+            # Ensure .env exists (first deploy: copy from example)
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "⚠️  .env created from .env.example — update secrets manually."
+            fi
+
+            echo "📦 Pulling latest images from GHCR..."
+            docker compose pull
+
+            echo "🔄 Starting services with zero-downtime rolling update..."
+            docker compose up -d --remove-orphans
+
+            echo "🧹 Removing dangling images..."
+            docker image prune -f
+
+            echo "✅ Deploy complete. Checking service health..."
+            sleep 10
+            curl -f http://localhost/health || (echo "❌ Health check failed" && exit 1)
+            echo "🎉 Staging is healthy."
+
+      - name: Notify Slack — Success
+        if: success() && secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "✅ *OmniSync staging deploy succeeded*",
+              "attachments": [{
+                "color": "good",
+                "fields": [
+                  { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+                  { "title": "Commit", "value": "${{ github.sha }}", "short": true },
+                  { "title": "Actor", "value": "${{ github.actor }}", "short": true },
+                  { "title": "Run", "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack — Failure
+        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "❌ *OmniSync staging deploy FAILED*",
+              "attachments": [{
+                "color": "danger",
+                "fields": [
+                  { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+                  { "title": "Actor", "value": "${{ github.actor }}", "short": true },
+                  { "title": "Run", "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

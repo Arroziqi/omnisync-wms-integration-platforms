@@ -1,0 +1,54 @@
+# ============================================================
+# dependabot.yml — Automated Dependency Updates
+# Raises PRs weekly for npm packages and GitHub Actions.
+# ============================================================
+
+version: 2
+updates:
+  # ── npm packages ─────────────────────────────────────────
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Jakarta'
+    # Group all non-major updates into a single PR to reduce noise
+    groups:
+      non-major-dependencies:
+        dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
+      non-major-devdependencies:
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+    labels:
+      - 'dependencies'
+      - 'automated'
+    commit-message:
+      prefix: 'chore(deps)'
+    open-pull-requests-limit: 10
+    # Ignore Nx major bumps — upgrade those deliberately
+    ignore:
+      - dependency-name: 'nx'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@nx/*'
+        update-types: ['version-update:semver-major']
+
+  # ── GitHub Actions ────────────────────────────────────────
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Jakarta'
+    labels:
+      - 'github-actions'
+      - 'automated'
+    commit-message:
+      prefix: 'chore(ci)'
+    open-pull-requests-limit: 5

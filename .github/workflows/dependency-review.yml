@@ -1,0 +1,36 @@
+# ============================================================
+# dependency-review.yml — CVE Security Scanning
+# Blocks PRs that introduce high/critical severity vulnerabilities.
+# Requires: Settings → Security → Dependency graph (on by default
+# for public repos; enable manually for private repos).
+# ============================================================
+
+name: Dependency Review
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: 🔒 Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dependency Review — block high/critical CVEs
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail the workflow if any vulnerability is HIGH or CRITICAL
+          fail-on-severity: high
+          # Also block packages with incompatible licenses
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0
+          # Post a summary comment on the PR
+          comment-summary-in-pr: always

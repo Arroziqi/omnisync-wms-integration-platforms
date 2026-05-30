@@ -1,0 +1,55 @@
+# ==============================================================
+# docker-compose.dev.yml — Hot-Reload Development Overlay
+# ==============================================================
+# Extends docker-compose.yml for local development with:
+#   - Source volume mounts for live code reloading
+#   - nx serve instead of compiled output
+#   - No Nginx (access apps directly on their ports)
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# ==============================================================
+
+name: omnisync
+
+services:
+  # ──────────────────────────────────────────────
+  # NestJS API — Dev mode with hot-reload
+  # ──────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: builder          # Use builder stage (includes devDependencies + Nx)
+    command: npx nx serve api  # Hot-reload via Nx
+    environment:
+      NODE_ENV: development
+    volumes:
+      - .:/app                 # Mount the entire monorepo for live reload
+      - /app/node_modules      # Prevent host node_modules from overriding container's
+    healthcheck:
+      # Relax healthcheck timing for dev cold-starts
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # Next.js Web — Dev mode with hot-reload
+  # ──────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      target: builder          # Use builder stage
+    command: npx nx dev web    # Next.js hot-reload dev server
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001  # Direct to API port in dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    healthcheck:
+      start_period: 60s
+
+  # Disable Nginx in dev — access services directly on their ports
+  nginx:
+    profiles:
+      - production             # Only starts when --profile production is passed

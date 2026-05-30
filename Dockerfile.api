@@ -1,0 +1,56 @@
+# ============================================================
+# Dockerfile.api — NestJS API (Multi-Stage Build)
+# ============================================================
+
+# ---- Stage 1: Builder ----
+FROM node:20-alpine AS builder
+
+# Install build tools for native modules
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy package manifests and install all dependencies
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy the full source tree
+COPY . .
+
+# Build only the api application using Nx
+RUN npx nx build api --configuration=production
+
+# ---- Stage 2: Runner (Production) ----
+FROM node:20-alpine AS runner
+
+LABEL org.opencontainers.image.title="OmniSync API"
+LABEL org.opencontainers.image.description="NestJS API Gateway for OmniSync WMS Integration Platform"
+
+# Create a non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
+
+WORKDIR /app
+
+# Copy package manifests and install production-only dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy compiled output from the builder stage
+COPY --from=builder /app/dist/apps/api ./dist
+
+# Set correct ownership
+RUN chown -R nestjs:nodejs /app
+
+USER nestjs
+
+# Expose the NestJS port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget -qO- http://localhost:3000/health || exit 1
+
+ENV NODE_ENV=production
+
+CMD ["node", "dist/main.js"]
