@@ -7,11 +7,15 @@ import {
   Post,
   Request,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Audit } from '../audit/audit.decorator';
+import { AuditInterceptor } from '../audit/audit.interceptor';
+import { Throttle } from '../security/decorators/skip-throttle.decorator';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -29,8 +33,15 @@ export class AuthController {
    * POST /api/v1/auth/login
    * Returns access_token + refresh_token on valid credentials.
    */
+  /**
+   * Stricter throttle: 5 requests per 60 s per IP.
+   * Prevents brute-force and credential-stuffing attacks.
+   */
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Audit('user.login')
+  @UseInterceptors(AuditInterceptor)
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto.email, dto.password);
   }
@@ -39,8 +50,10 @@ export class AuthController {
    * POST /api/v1/auth/refresh-token
    * Exchanges a valid refresh token for a new access token.
    */
+  /** Stricter throttle: 10 requests per 60 s per IP for token refresh. */
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async refreshToken(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto.refresh_token);
   }
@@ -52,6 +65,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Audit('user.logout')
+  @UseInterceptors(AuditInterceptor)
   async logout(
     @Request() req: AuthenticatedRequest,
     @Body() dto: RefreshTokenDto,

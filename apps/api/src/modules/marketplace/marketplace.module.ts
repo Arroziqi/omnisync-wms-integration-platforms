@@ -26,6 +26,6 @@ import { WebhooksController } from './webhooks.controller';
     MarketplaceConnectorResolver,
     MarketplaceService,
   ],
-  exports: [MarketplaceService, EncryptionService],
+  exports: [MarketplaceService, EncryptionService, MarketplaceConnectorResolver],
 })
 export class MarketplaceModule {}

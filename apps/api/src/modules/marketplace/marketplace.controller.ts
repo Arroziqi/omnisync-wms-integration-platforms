@@ -8,6 +8,7 @@ import {
   Query,
   Request,
   UseGuards,
+  UseInterceptors,
   HttpCode,
   HttpStatus,
   Res,
@@ -18,6 +19,8 @@ import { ConnectMarketplaceDto } from './dto/connect-marketplace.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
+import { Audit } from '../audit/audit.decorator';
+import { AuditInterceptor } from '../audit/audit.interceptor';
 
 @Controller('marketplace-accounts')
 export class MarketplaceController {
@@ -41,6 +44,8 @@ export class MarketplaceController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('marketplace:write')
   @Post('connect')
+  @Audit('marketplace.connect')
+  @UseInterceptors(AuditInterceptor)
   async connect(
     @Body() dto: ConnectMarketplaceDto,
     @Request() req: any,
@@ -119,6 +124,8 @@ export class MarketplaceController {
   @Permissions('marketplace:write')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Audit('marketplace.disconnect')
+  @UseInterceptors(AuditInterceptor)
   async disconnectAccount(@Param('id') id: string) {
     await this.marketplaceService.disconnectAccount(id);
   }

@@ -13,6 +13,12 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<{ name: string; email: string; role?: { name: string } } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleMobileLinkClick = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -49,6 +55,27 @@ export default function DashboardLayout({
 
     fetchUser();
   }, [router]);
+
+  // Poll unread notification count every 30 seconds
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+      try {
+        const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
+        const res = await fetch(`${apiBase}/api/v1/notifications/unread-count`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.count ?? 0);
+        }
+      } catch { /* silently ignore */ }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
     const token = localStorage.getItem('access_token');
@@ -151,6 +178,117 @@ export default function DashboardLayout({
         </svg>
       ),
     },
+    {
+      label: 'Products',
+      path: '/dashboard/products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+          <line x1="12" y1="22.08" x2="12" y2="12" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Inventory',
+      path: '/dashboard/inventory',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Warehouses',
+      path: '/dashboard/warehouses',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 21h18M3 10l9-7 9 7M5 10v11h14V10" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 21v-8h6v8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Orders',
+      path: '/dashboard/orders',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+      ),
+    },
+  ];
+
+  const monitoringItems = [
+    {
+      label: 'Sync Monitoring',
+      path: '/dashboard/monitoring/sync',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Webhook Events',
+      path: '/dashboard/monitoring/webhooks',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+          <line x1="6" y1="1" x2="6" y2="4" />
+          <line x1="10" y1="1" x2="10" y2="4" />
+          <line x1="14" y1="1" x2="14" y2="4" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Queue & DLQ',
+      path: '/dashboard/monitoring/queue',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+          <line x1="12" y1="12" x2="12" y2="16" />
+          <line x1="10" y1="14" x2="14" y2="14" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Retry Manager',
+      path: '/dashboard/monitoring/retry',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Audit Logs',
+      path: '/dashboard/audit',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Notifications',
+      path: '/dashboard/notifications',
+      badge: unreadCount,
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -158,25 +296,81 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className="sidebar glass-card">
         <div className="sidebar-brand">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
-          <span className="brand-text">Omni<span>Sync</span></span>
+          <div className="brand-logo-container">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <span className="brand-text">Omni<span>Sync</span></span>
+          </div>
+
+          <button 
+            className="hamburger-btn" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {isMobileMenuOpen ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
+          </button>
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className={`sidebar-nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
           {navItems.map((item) => {
-            const isActive = pathname === item.path;
+            const isActive = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
             return (
-              <Link key={item.path} href={item.path} className={`nav-item ${isActive ? 'active' : ''}`}>
+              <Link 
+                key={item.path} 
+                href={item.path} 
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleMobileLinkClick}
+              >
                 <span className="nav-icon">{item.icon}</span>
                 <span className="nav-label">{item.label}</span>
               </Link>
             );
           })}
+
+          {/* Monitoring Section */}
+          <div className="nav-section-label">Monitoring</div>
+          {monitoringItems.map((item: any) => {
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <Link 
+                key={item.path} 
+                href={item.path} 
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleMobileLinkClick}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-label">{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="nav-badge">{item.badge > 99 ? '99+' : item.badge}</span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="sidebar-footer">
+        <div className={`sidebar-footer ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+          <div className="mobile-profile-widget">
+            <div className="user-avatar">
+              {(user?.name || 'A').charAt(0).toUpperCase()}
+            </div>
+            <div className="user-details">
+              <span className="user-name">{user?.name}</span>
+              <span className="badge badge-info">{user?.role?.name || 'Admin'}</span>
+            </div>
+          </div>
+
           <button onClick={handleLogout} className="btn-logout">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
@@ -195,17 +389,42 @@ export default function DashboardLayout({
               {pathname === '/dashboard/users' && 'User Management'}
               {pathname === '/dashboard/roles' && 'Roles & Access Permissions'}
               {pathname === '/dashboard/integrations' && 'Marketplace Integrations'}
+              {pathname === '/dashboard/products' && 'Product & SKU Mapping'}
+              {pathname.startsWith('/dashboard/products/') && 'Product Detailed View'}
+              {pathname === '/dashboard/inventory' && 'Centralized Inventory Tracking'}
+              {pathname === '/dashboard/warehouses' && 'Warehouse Management'}
+              {pathname === '/dashboard/orders' && 'Centralized Order Synchronization'}
+              {pathname.startsWith('/dashboard/orders/') && 'Order Detailed View'}
+              {pathname === '/dashboard/monitoring/sync' && 'Sync Monitoring'}
+              {pathname === '/dashboard/monitoring/webhooks' && 'Webhook Event Monitoring'}
+              {pathname === '/dashboard/monitoring/queue' && 'Queue & Dead Letter Queue'}
+              {pathname === '/dashboard/monitoring/retry' && 'Retry Manager'}
+              {pathname === '/dashboard/audit' && 'Audit Logs'}
+              {pathname === '/dashboard/notifications' && 'Notification Center'}
             </h1>
             <p className="header-subtitle">Welcome back, {user?.name || 'Administrator'}</p>
           </div>
 
-          <div className="user-profile-widget">
-            <div className="user-avatar">
-              {(user?.name || 'A').charAt(0).toUpperCase()}
-            </div>
-            <div className="user-details">
-              <span className="user-name">{user?.name}</span>
-              <span className="badge badge-info">{user?.role?.name || 'Admin'}</span>
+          <div className="header-right">
+            {/* Bell icon with unread badge */}
+            <Link href="/dashboard/notifications" className="bell-btn" title="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+              )}
+            </Link>
+
+            <div className="user-profile-widget">
+              <div className="user-avatar">
+                {(user?.name || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div className="user-details">
+                <span className="user-name">{user?.name}</span>
+                <span className="badge badge-info">{user?.role?.name || 'Admin'}</span>
+              </div>
             </div>
           </div>
         </header>
@@ -272,6 +491,24 @@ export default function DashboardLayout({
           flex-direction: column;
           gap: 8px;
           flex-grow: 1;
+          overflow-y: auto;
+          padding-right: 6px;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+          width: 4px;
+        }
+        .sidebar-nav::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+          background: rgba(99, 102, 241, 0.35);
         }
 
         .nav-item {
@@ -307,6 +544,35 @@ export default function DashboardLayout({
 
         .nav-item:hover .nav-icon svg {
           transform: translateX(2px);
+        }
+
+        .nav-badge {
+          margin-left: auto;
+          min-width: 20px;
+          height: 20px;
+          padding: 0 5px;
+          border-radius: 10px;
+          background: #ef4444;
+          color: #fff;
+          font-size: 0.68rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: pulse-badge 2s ease-in-out infinite;
+        }
+        @keyframes pulse-badge {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+
+        .nav-section-label {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: #334155;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          padding: 16px 16px 6px;
         }
 
         .sidebar-footer {
@@ -349,6 +615,49 @@ export default function DashboardLayout({
           height: calc(100vh - 40px);
           overflow-y: auto;
           padding-right: 4px;
+        }
+
+        .header-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .bell-btn {
+          position: relative;
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.06);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #64748b;
+          text-decoration: none;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
+        }
+        .bell-btn:hover { background: rgba(99,102,241,0.1); color: #818cf8; border-color: rgba(99,102,241,0.25); }
+        .bell-btn svg { width: 18px; height: 18px; }
+
+        .bell-badge {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 4px;
+          border-radius: 9px;
+          background: #ef4444;
+          color: #fff;
+          font-size: 0.65rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #060913;
+          animation: pulse-badge 2s ease-in-out infinite;
         }
 
         .main-header {
@@ -410,6 +719,20 @@ export default function DashboardLayout({
           color: #f1f5f9;
         }
 
+        .brand-logo-container {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .hamburger-btn {
+          display: none;
+        }
+
+        .mobile-profile-widget {
+          display: none;
+        }
+
         .content-container {
           flex-grow: 1;
           display: flex;
@@ -422,12 +745,105 @@ export default function DashboardLayout({
         @media (max-width: 992px) {
           .dashboard-container {
             flex-direction: column;
+            gap: 12px;
+            padding: 10px;
           }
           .sidebar {
             width: 100%;
             height: auto;
             position: relative;
             top: 0;
+            padding: 15px 20px;
+            border-radius: 16px;
+          }
+          .sidebar-brand {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 0;
+            padding-left: 0;
+          }
+          .hamburger-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px;
+            border-radius: 8px;
+            color: #94a3b8;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            transition: all 0.2s ease;
+          }
+          .hamburger-btn:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: #fff;
+            border-color: rgba(99, 102, 241, 0.25);
+          }
+          .hamburger-btn svg {
+            width: 20px;
+            height: 20px;
+          }
+          .sidebar-nav {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            margin-top: 15px;
+            gap: 4px;
+            overflow-y: visible;
+            padding-right: 0;
+          }
+          .sidebar-nav.mobile-open {
+            display: flex;
+          }
+          .sidebar-footer {
+            display: none;
+            width: 100%;
+            margin-top: 10px;
+            padding-top: 15px;
+          }
+          .sidebar-footer.mobile-open {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .main-header .user-details {
+            display: none;
+          }
+          .mobile-profile-widget {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+          }
+          .mobile-profile-widget .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+          }
+          .mobile-profile-widget .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+          }
+          .mobile-profile-widget .user-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #f1f5f9;
           }
           .main-layout {
             height: auto;

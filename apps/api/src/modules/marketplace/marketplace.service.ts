@@ -4,6 +4,7 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+import { Subject } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import * as crypto from 'crypto';
@@ -18,6 +19,8 @@ import { MarketplaceConnectorResolver } from './marketplace-connector.resolver';
 
 @Injectable()
 export class MarketplaceService implements OnModuleInit {
+  public readonly accountConnected$ = new Subject<string>();
+
   constructor(
     @InjectRepository(MarketplaceAccountEntity)
     private readonly accountRepo: Repository<MarketplaceAccountEntity>,
@@ -135,6 +138,9 @@ export class MarketplaceService implements OnModuleInit {
     }
 
     await this.accountRepo.save(account);
+
+    // Trigger background sync events (historical sync for orders, products)
+    this.accountConnected$.next(account.id);
 
     // Consume (delete) the temporary state
     await this.stateRepo.remove(stateRecord);

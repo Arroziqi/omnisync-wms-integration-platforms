@@ -1,0 +1,187 @@
+# ==============================================================================
+# docker-compose.prod.yml — Production Overrides
+# ==============================================================================
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This file OVERRIDES the base docker-compose.yml for production.
+# Key differences from dev:
+#   • Pinned image tags (no :latest)
+#   • PostgreSQL and Redis ports NOT exposed to host (internal only)
+#   • SSL cert volume mounted into Nginx
+#   • Docker file-based secrets for all sensitive values
+#   • read_only filesystem + no-new-privileges for api/web containers
+#   • Resource limits (mem_limit, cpus)
+#   • NODE_ENV=production, LOG_LEVEL=warn
+# ==============================================================================
+
+name: omnisync
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Docker file-based secrets
+# Secret files must exist on the host before starting:
+#   ./secrets/db_password.txt
+#   ./secrets/redis_password.txt
+#   ./secrets/jwt_secret.txt
+#   ./secrets/tiktok_app_secret.txt
+#   ./secrets/shopee_partner_key.txt
+#   ./secrets/lazada_app_secret.txt
+# See secrets/README.md for setup instructions.
+# ──────────────────────────────────────────────────────────────────────────────
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  tiktok_app_secret:
+    file: ./secrets/tiktok_app_secret.txt
+  shopee_partner_key:
+    file: ./secrets/shopee_partner_key.txt
+  lazada_app_secret:
+    file: ./secrets/lazada_app_secret.txt
+
+services:
+  # ──────────────────────────────────────────────────────────────────────────
+  # PostgreSQL — production hardening
+  # ──────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    # Do NOT expose postgres port to the host in production
+    ports: !reset []
+    secrets:
+      - db_password
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Redis — production hardening
+  # ──────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    # Do NOT expose redis port to the host in production
+    ports: !reset []
+    secrets:
+      - redis_password
+    command: >
+      sh -c 'redis-server
+      --requirepass "$(cat /run/secrets/redis_password)"
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru'
+    deploy:
+      resources:
+        limits:
+          memory: 300m
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # NestJS API — production hardening
+  # ──────────────────────────────────────────────────────────────────────────
+  api:
+    # Do NOT expose API port directly; Nginx proxies all traffic
+    ports: !reset []
+    secrets:
+      - db_password
+      - redis_password
+      - jwt_secret
+      - tiktok_app_secret
+      - shopee_partner_key
+      - lazada_app_secret
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: warn
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-omnisync}:_DB_PASSWORD_PLACEHOLDER_@postgres:5432/${POSTGRES_DB:-omnisync_db}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-1d}
+      TIKTOK_APP_KEY: ${TIKTOK_APP_KEY}
+      SHOPEE_PARTNER_ID: ${SHOPEE_PARTNER_ID}
+      LAZADA_APP_KEY: ${LAZADA_APP_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      THROTTLE_TTL: ${THROTTLE_TTL:-60}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
+      # Secrets are mounted at /run/secrets/<name> — read via app startup script
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      REDIS_PASSWORD_FILE: /run/secrets/redis_password
+      TIKTOK_APP_SECRET_FILE: /run/secrets/tiktok_app_secret
+      SHOPEE_PARTNER_KEY_FILE: /run/secrets/shopee_partner_key
+      LAZADA_APP_SECRET_FILE: /run/secrets/lazada_app_secret
+    read_only: true
+    tmpfs:
+      - /tmp          # writable scratch space for temp files
+      - /app/dist/tmp # NestJS runtime tmpdir if needed
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '1.0'
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Next.js Web — production hardening
+  # ──────────────────────────────────────────────────────────────────────────
+  web:
+    # Do NOT expose web port directly; Nginx proxies all traffic
+    ports: !reset []
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache # Next.js build cache
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Nginx — production: HTTPS + cert volume
+  # ──────────────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro           # TLS certificates (fullchain.pem, privkey.pem)
+      - certbot_webroot:/var/www/certbot:ro   # ACME challenge for Let's Encrypt renewals
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  certbot_webroot:
+    driver: local

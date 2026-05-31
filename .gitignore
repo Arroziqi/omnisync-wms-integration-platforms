@@ -46,3 +46,9 @@ Thumbs.db
 # Next.js
 .next
 out
+
+# Security — NEVER commit these
+secrets/*.txt
+certs/*.pem
+certs/*.key
+certs/*.crt

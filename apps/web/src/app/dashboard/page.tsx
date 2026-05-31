@@ -1,291 +1,427 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+
+interface DashboardMetrics {
+  orders: { totalToday: number; totalAll: number };
+  syncJobs: { pending: number; active: number; completed: number; failed: number; dead: number };
+  webhooks: { totalToday: number; processed: number; failed: number };
+  marketplace: { activeAccounts: number; totalAccounts: number; expiredAccounts: number };
+  failedOrders: { total: number; pending: number };
+}
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    users: 0,
-    roles: 0,
-    channels: 3,
-    syncRate: '99.4%'
-  });
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchMetrics = useCallback(async () => {
+    const token = localStorage.getItem('access_token');
+    try {
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
+      const res = await fetch(`${apiBase}/api/v1/monitoring/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMetrics(data);
+        setLastUpdated(new Date());
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard metrics', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    const fetchStats = async () => {
-      try {
-        const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
-        
-        // Fetch users count
-        const userRes = await fetch(`${apiBase}/api/v1/users`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (userRes.ok) {
-          const users = await userRes.json();
-          // Fetch roles count
-          const roleRes = await fetch(`${apiBase}/api/v1/roles`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const roles = roleRes.ok ? await roleRes.json() : [];
-          setStats({
-            users: users.length,
-            roles: roles.length,
-            channels: 3,
-            syncRate: '99.8%'
-          });
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard metrics', err);
-      }
-    };
-    fetchStats();
-  }, []);
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000);
+    return () => clearInterval(interval);
+  }, [fetchMetrics]);
+
+  const syncSuccessRate =
+    metrics && metrics.syncJobs.completed + metrics.syncJobs.failed > 0
+      ? (
+          (metrics.syncJobs.completed /
+            (metrics.syncJobs.completed + metrics.syncJobs.failed)) *
+          100
+        ).toFixed(1) + '%'
+      : '—';
 
   const cards = [
     {
-      title: 'Active Users',
-      value: stats.users || '0',
-      description: 'System operators & admins',
+      title: 'Orders Synced Today',
+      value: loading ? '...' : (metrics?.orders.totalToday ?? 0),
+      sub: `${metrics?.orders.totalAll ?? 0} total all time`,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
+          <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
         </svg>
       ),
-      color: '#6366f1'
+      color: '#6366f1',
+      glowColor: 'rgba(99,102,241,0.15)',
     },
     {
-      title: 'Configured Roles',
-      value: stats.roles || '0',
-      description: 'Access groups with explicit RBAC',
+      title: 'Queue Health',
+      value: loading ? '...' : (metrics?.syncJobs.active ?? 0),
+      sub: `${metrics?.syncJobs.pending ?? 0} pending · ${metrics?.syncJobs.dead ?? 0} dead`,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+          <line x1="12" y1="12" x2="12" y2="16" />
+          <line x1="10" y1="14" x2="14" y2="14" />
         </svg>
       ),
-      color: '#06b6d4'
-    },
-    {
-      title: 'Active Channels',
-      value: stats.channels,
-      description: 'TikTok, Shopee & Lazada integrations',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-        </svg>
-      ),
-      color: '#10b981'
+      color: '#06b6d4',
+      glowColor: 'rgba(6,182,212,0.15)',
     },
     {
       title: 'Sync Success Rate',
-      value: stats.syncRate,
-      description: 'WMS real-time order matching',
+      value: loading ? '...' : syncSuccessRate,
+      sub: `${metrics?.syncJobs.failed ?? 0} failed jobs`,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
       ),
-      color: '#f59e0b'
-    }
+      color: '#10b981',
+      glowColor: 'rgba(16,185,129,0.15)',
+    },
+    {
+      title: 'Active Channels',
+      value: loading ? '...' : (metrics?.marketplace.activeAccounts ?? 0),
+      sub: `${metrics?.marketplace.expiredAccounts ?? 0} expired · ${metrics?.marketplace.totalAccounts ?? 0} total`,
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        </svg>
+      ),
+      color: '#f59e0b',
+      glowColor: 'rgba(245,158,11,0.15)',
+    },
+    {
+      title: 'Webhooks Today',
+      value: loading ? '...' : (metrics?.webhooks.totalToday ?? 0),
+      sub: `${metrics?.webhooks.processed ?? 0} processed · ${metrics?.webhooks.failed ?? 0} failed`,
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+          <line x1="6" y1="1" x2="6" y2="4" />
+          <line x1="10" y1="1" x2="10" y2="4" />
+          <line x1="14" y1="1" x2="14" y2="4" />
+        </svg>
+      ),
+      color: '#8b5cf6',
+      glowColor: 'rgba(139,92,246,0.15)',
+    },
+    {
+      title: 'Failed Order Syncs',
+      value: loading ? '...' : (metrics?.failedOrders.total ?? 0),
+      sub: `${metrics?.failedOrders.pending ?? 0} awaiting retry`,
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      ),
+      color: '#ef4444',
+      glowColor: 'rgba(239,68,68,0.15)',
+    },
   ];
 
   return (
-    <div className="dashboard-overview">
-      {/* Metric Cards Grid */}
-      <div className="metrics-grid">
+    <div className="overview-page">
+      {/* Page Header */}
+      <div className="overview-header">
+        <div className="header-actions">
+          {lastUpdated && (
+            <span className="last-updated">
+              Updated {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+          <button id="btn-refresh-overview" onClick={fetchMetrics} className="btn-refresh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Metric Cards */}
+      <div className="kpi-grid">
         {cards.map((card, i) => (
-          <div key={i} className="glass-card metric-card" style={{ '--accent-color': card.color } as any}>
-            <div className="card-header">
-              <span className="card-icon">{card.icon}</span>
-              <span className="card-title">{card.title}</span>
+          <div
+            key={i}
+            className="kpi-card glass-card"
+            style={{ '--accent': card.color, '--glow': card.glowColor } as any}
+          >
+            <div className="kpi-top">
+              <span className="kpi-icon">{card.icon}</span>
+              <span className="kpi-title">{card.title}</span>
             </div>
-            <div className="card-body">
-              <h2 className="card-value">{card.value}</h2>
-              <p className="card-description">{card.description}</p>
-            </div>
+            <div className="kpi-value">{card.value}</div>
+            <p className="kpi-sub">{card.sub}</p>
+            <div className="kpi-accent-bar" />
           </div>
         ))}
       </div>
 
-      {/* System Status Section */}
+      {/* Status Panels */}
       <div className="status-grid">
-        <div className="glass-card status-card">
-          <h3 className="gradient-text card-heading">Integration Pipeline Health</h3>
-          <div className="pipeline-list">
-            <div className="pipeline-item">
-              <span className="pipeline-name">TikTok Shop Sync</span>
-              <span className="badge badge-success">Online & Healthy</span>
-            </div>
-            <div className="pipeline-item">
-              <span className="pipeline-name">Shopee API Connection</span>
-              <span className="badge badge-success">Online & Healthy</span>
-            </div>
-            <div className="pipeline-item">
-              <span className="pipeline-name">Lazada Webhook Receiver</span>
-              <span className="badge badge-success">Online & Healthy</span>
-            </div>
+        {/* Queue Status */}
+        <div className="glass-card status-panel">
+          <h3 className="panel-title gradient-text">Queue System Status</h3>
+          <div className="status-rows">
+            {[
+              { label: 'Pending', value: metrics?.syncJobs.pending ?? 0, color: '#f59e0b' },
+              { label: 'Active', value: metrics?.syncJobs.active ?? 0, color: '#06b6d4' },
+              { label: 'Completed', value: metrics?.syncJobs.completed ?? 0, color: '#10b981' },
+              { label: 'Failed', value: metrics?.syncJobs.failed ?? 0, color: '#ef4444' },
+              { label: 'Dead (DLQ)', value: metrics?.syncJobs.dead ?? 0, color: '#6b7280' },
+            ].map((row) => (
+              <div key={row.label} className="status-row">
+                <div className="status-label-group">
+                  <span className="status-dot" style={{ background: row.color }} />
+                  <span className="status-label">{row.label}</span>
+                </div>
+                <span className="status-count" style={{ color: row.color }}>{loading ? '—' : row.value}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="glass-card status-card">
-          <h3 className="gradient-text card-heading">Security Audit Overview</h3>
-          <div className="audit-list">
-            <div className="audit-item">
-              <div className="audit-info">
-                <span className="audit-action">Role Updated</span>
-                <span className="audit-meta">Operator permissions edited by Admin</span>
+        {/* Webhook Status */}
+        <div className="glass-card status-panel">
+          <h3 className="panel-title gradient-text">Webhook Processing Health</h3>
+          <div className="status-rows">
+            {[
+              { label: 'Received Today', value: metrics?.webhooks.totalToday ?? 0, color: '#6366f1' },
+              { label: 'Processed', value: metrics?.webhooks.processed ?? 0, color: '#10b981' },
+              { label: 'Failed', value: metrics?.webhooks.failed ?? 0, color: '#ef4444' },
+              { label: 'Failed Orders', value: metrics?.failedOrders.total ?? 0, color: '#f59e0b' },
+              { label: 'Awaiting Retry', value: metrics?.failedOrders.pending ?? 0, color: '#8b5cf6' },
+            ].map((row) => (
+              <div key={row.label} className="status-row">
+                <div className="status-label-group">
+                  <span className="status-dot" style={{ background: row.color }} />
+                  <span className="status-label">{row.label}</span>
+                </div>
+                <span className="status-count" style={{ color: row.color }}>{loading ? '—' : row.value}</span>
               </div>
-              <span className="audit-time">Just now</span>
-            </div>
-            <div className="audit-item">
-              <div className="audit-info">
-                <span className="audit-action">User Login</span>
-                <span className="audit-meta">User admin@omnisync.io authenticated successfully</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Marketplace Status */}
+        <div className="glass-card status-panel">
+          <h3 className="panel-title gradient-text">Marketplace Channels</h3>
+          <div className="status-rows">
+            {[
+              { label: 'Active Accounts', value: metrics?.marketplace.activeAccounts ?? 0, color: '#10b981' },
+              { label: 'Expired Tokens', value: metrics?.marketplace.expiredAccounts ?? 0, color: '#ef4444' },
+              { label: 'Total Accounts', value: metrics?.marketplace.totalAccounts ?? 0, color: '#94a3b8' },
+            ].map((row) => (
+              <div key={row.label} className="status-row">
+                <div className="status-label-group">
+                  <span className="status-dot" style={{ background: row.color }} />
+                  <span className="status-label">{row.label}</span>
+                </div>
+                <span className="status-count" style={{ color: row.color }}>{loading ? '—' : row.value}</span>
               </div>
-              <span className="audit-time">10 mins ago</span>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .dashboard-overview {
+        .overview-page {
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 24px;
         }
 
-        .metrics-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 20px;
+        .overview-header {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          margin-bottom: -8px;
         }
 
-        .metric-card {
-          position: relative;
-          overflow: hidden;
-          background: rgba(16, 22, 38, 0.4);
-          border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .metric-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 4px;
-          height: 100%;
-          background: var(--accent-color);
-        }
-
-        .card-header {
+        .header-actions {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 16px;
         }
 
-        .card-icon {
-          color: var(--accent-color);
-        }
-
-        .card-icon :global(svg) {
-          width: 24px;
-          height: 24px;
-        }
-
-        .card-title {
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: #94a3b8;
-          text-transform: uppercase;
-          letter-spacing: 0.03em;
-        }
-
-        .card-value {
-          font-size: 2.2rem;
-          font-weight: 700;
-          color: #f8fafc;
-          line-height: 1;
-          margin-bottom: 6px;
-        }
-
-        .card-description {
-          font-size: 0.85rem;
-          color: #64748b;
-        }
-
-        .status-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-          gap: 20px;
-        }
-
-        .status-card {
-          padding: 24px;
-          background: rgba(16, 22, 38, 0.35);
-        }
-
-        .card-heading {
-          font-size: 1.15rem;
-          font-weight: 700;
-          margin-bottom: 20px;
-        }
-
-        .pipeline-list, .audit-list {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .pipeline-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.04);
-          border-radius: 12px;
-        }
-
-        .pipeline-name {
-          font-weight: 500;
-          color: #e2e8f0;
-          font-size: 0.95rem;
-        }
-
-        .audit-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.04);
-          border-radius: 12px;
-        }
-
-        .audit-info {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .audit-action {
-          font-weight: 600;
-          color: #f1f5f9;
-          font-size: 0.9rem;
-        }
-
-        .audit-meta {
+        .last-updated {
           font-size: 0.8rem;
           color: #64748b;
         }
 
-        .audit-time {
-          font-size: 0.75rem;
-          color: #94a3b8;
+        .btn-refresh {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: 10px;
+          background: rgba(99, 102, 241, 0.1);
+          border: 1px solid rgba(99, 102, 241, 0.2);
+          color: #6366f1;
+          font-size: 0.85rem;
           font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-family: inherit;
+        }
+
+        .btn-refresh:hover {
+          background: rgba(99, 102, 241, 0.18);
+        }
+
+        .btn-refresh svg {
+          width: 14px;
+          height: 14px;
+        }
+
+        .kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 16px;
+        }
+
+        .kpi-card {
+          position: relative;
+          overflow: hidden;
+          padding: 20px;
+          background: rgba(16, 22, 38, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.25s ease;
+        }
+
+        .kpi-card:hover {
+          border-color: var(--accent);
+          box-shadow: 0 0 24px var(--glow), 0 8px 32px rgba(0,0,0,0.3);
+          transform: translateY(-2px);
+        }
+
+        .kpi-top {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
+        .kpi-icon {
+          color: var(--accent);
+          display: flex;
+        }
+
+        .kpi-icon :global(svg) {
+          width: 20px;
+          height: 20px;
+        }
+
+        .kpi-title {
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .kpi-value {
+          font-size: 2.4rem;
+          font-weight: 700;
+          color: #f8fafc;
+          line-height: 1;
+          letter-spacing: -0.02em;
+          margin-bottom: 6px;
+        }
+
+        .kpi-sub {
+          font-size: 0.8rem;
+          color: #64748b;
+        }
+
+        .kpi-accent-bar {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, var(--accent), transparent);
+          opacity: 0;
+          transition: opacity 0.25s;
+        }
+
+        .kpi-card:hover .kpi-accent-bar {
+          opacity: 1;
+        }
+
+        .status-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 16px;
+        }
+
+        .status-panel {
+          padding: 24px;
+          background: rgba(16, 22, 38, 0.4);
+        }
+
+        .panel-title {
+          font-size: 1rem;
+          font-weight: 700;
+          margin-bottom: 20px;
+        }
+
+        .status-rows {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .status-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 14px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .status-label-group {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+
+        .status-label {
+          font-size: 0.9rem;
+          color: #e2e8f0;
+          font-weight: 500;
+        }
+
+        .status-count {
+          font-size: 1.1rem;
+          font-weight: 700;
         }
       `}</style>
     </div>
