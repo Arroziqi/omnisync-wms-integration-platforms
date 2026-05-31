@@ -72,8 +72,8 @@ describe('ProductSyncService', () => {
     productRepo = module.get(getRepositoryToken(ProductEntity));
     mappingRepo = module.get(getRepositoryToken(MarketplaceProductEntity));
     accountRepo = module.get(getRepositoryToken(MarketplaceAccountEntity));
-    resolver = module.get(MarketplaceConnectorResolver);
-    encryption = module.get(EncryptionService);
+    _resolver = module.get(MarketplaceConnectorResolver);
+    _encryption = module.get(EncryptionService) as any;
   });
 
   afterEach(() => {

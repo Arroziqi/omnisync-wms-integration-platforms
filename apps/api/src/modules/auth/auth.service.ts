@@ -110,7 +110,7 @@ export class AuthService {
 
     // Strip password hash before returning
      
-    const { _passwordHash, ...safeUser } = user;
+    const { passwordHash: _passwordHash, ...safeUser } = user;
     return {
       ...(safeUser as Omit<UserEntity, 'passwordHash'>),
       permissions,

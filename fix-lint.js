@@ -5,7 +5,7 @@ const data = JSON.parse(fs.readFileSync('lint-results.json', 'utf8'));
 for (const result of data) {
   if (result.errorCount === 0 && result.warningCount === 0) continue;
 
-  let lines = fs.readFileSync(result.filePath, 'utf8').split('\n');
+  const lines = fs.readFileSync(result.filePath, 'utf8').split('\n');
   const changes = [];
 
   for (const msg of result.messages) {

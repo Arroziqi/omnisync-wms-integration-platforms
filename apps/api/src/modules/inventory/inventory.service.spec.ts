@@ -66,8 +66,8 @@ describe('InventoryService', () => {
 
     service = module.get<InventoryService>(InventoryService);
     warehouseRepo = module.get(getRepositoryToken(WarehouseEntity));
-    inventoryRepo = module.get(getRepositoryToken(InventoryEntity));
-    movementRepo = module.get(getRepositoryToken(InventoryMovementEntity));
+    _inventoryRepo = module.get(getRepositoryToken(InventoryEntity));
+    _movementRepo = module.get(getRepositoryToken(InventoryMovementEntity));
     variantRepo = module.get(getRepositoryToken(ProductVariantEntity));
     syncQueue = module.get(InventorySyncQueueService);
 

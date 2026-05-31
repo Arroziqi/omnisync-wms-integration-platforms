@@ -52,7 +52,7 @@ describe('OrdersService', () => {
 
     service = module.get<OrdersService>(OrdersService);
     orderRepo = module.get(getRepositoryToken(OrderEntity));
-    itemRepo = module.get(getRepositoryToken(OrderItemEntity));
+    _itemRepo = module.get(getRepositoryToken(OrderItemEntity));
     accountRepo = module.get(getRepositoryToken(MarketplaceAccountEntity));
     failureRepo = module.get(getRepositoryToken(OrderSyncFailureEntity));
     syncQueue = module.get(OrderSyncQueueService);

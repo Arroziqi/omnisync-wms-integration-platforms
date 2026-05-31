@@ -172,7 +172,7 @@ export class MarketplaceService implements OnModuleInit {
     const finalAccounts = hasChanges ? await this.accountRepo.find() : accounts;
     return finalAccounts.map((acc) => {
       // Omit tokens to prevent exposing encrypted payloads to the client
-      const { _accessToken, _refreshToken, ...publicFields } = acc;
+      const { accessToken: _accessToken, refreshToken: _refreshToken, ...publicFields } = acc;
       return publicFields;
     });
   }
@@ -198,7 +198,7 @@ export class MarketplaceService implements OnModuleInit {
 
     await this.accountRepo.save(account);
 
-    const { _accessToken, _refreshToken, ...publicFields } = account;
+    const { accessToken: _accessToken, refreshToken: _refreshToken, ...publicFields } = account;
     return publicFields;
   }
 

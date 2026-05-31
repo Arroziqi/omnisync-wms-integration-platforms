@@ -91,7 +91,7 @@ describe('MarketplaceService', () => {
     accountRepo = module.get(getRepositoryToken(MarketplaceAccountEntity));
     stateRepo = module.get(getRepositoryToken(OAuthStateEntity));
     encryptionService = module.get(EncryptionService) as any;
-    resolver = module.get(MarketplaceConnectorResolver) as any;
+    _resolver = module.get(MarketplaceConnectorResolver) as any;
   });
 
   afterEach(() => {
