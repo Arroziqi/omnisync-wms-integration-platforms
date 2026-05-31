@@ -31,7 +31,7 @@ export class UsersService {
 
     return users.map((user) => {
        
-      const { _passwordHash, ...safeUser } = user;
+      const { passwordHash, ...safeUser } = user;
       return safeUser as Omit<UserEntity, 'passwordHash'>;
     });
   }
@@ -47,7 +47,7 @@ export class UsersService {
     }
 
      
-    const { _passwordHash, ...safeUser } = user;
+    const { passwordHash, ...safeUser } = user;
     return safeUser as Omit<UserEntity, 'passwordHash'>;
   }
 
