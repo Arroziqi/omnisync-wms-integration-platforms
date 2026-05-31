@@ -53,7 +53,7 @@ export class TikTokConnectorService implements IMarketplaceConnector {
         sellerId: data.seller_id || `tt_${Math.random().toString(36).substr(2, 9)}`,
         sellerName: data.seller_name || 'TikTok Seller Partner',
       };
-    } catch (err) {
+    } catch (_err) {
       // Fallback to simulation in local test environments if API throws network error
       return this.simulateTokenExchange(code, 'tiktok');
     }
@@ -89,7 +89,7 @@ export class TikTokConnectorService implements IMarketplaceConnector {
         sellerId: data.seller_id || `tt_refreshed`,
         sellerName: data.seller_name || 'TikTok Seller Refreshed',
       };
-    } catch (err) {
+    } catch (_err) {
       return this.simulateTokenRefresh(refreshToken, 'tiktok');
     }
   }

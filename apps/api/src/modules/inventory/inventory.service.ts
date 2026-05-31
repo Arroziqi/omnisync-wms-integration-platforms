@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, Like } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { WarehouseEntity } from '../../database/entities/warehouse.entity';
 import { InventoryEntity } from '../../database/entities/inventory.entity';
 import { InventoryMovementEntity, MovementType } from '../../database/entities/inventory-movement.entity';
@@ -252,7 +252,7 @@ export class InventoryService {
 
     return this.dataSource.transaction(async (manager) => {
       // 1. Source warehouse deduction
-      let fromInventory = await manager.findOne(InventoryEntity, {
+      const fromInventory = await manager.findOne(InventoryEntity, {
         where: { warehouseId: dto.fromWarehouseId, variantId: dto.variantId },
       });
 

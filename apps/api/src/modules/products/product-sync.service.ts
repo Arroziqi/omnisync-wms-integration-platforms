@@ -81,8 +81,8 @@ export class ProductSyncService {
         await new Promise((resolve) => setTimeout(resolve, 800));
       } else {
         // 2. Real API implementation
-        const decryptedAccessToken = this.encryption.decrypt(account.accessToken);
-        const connector = this.connectorResolver.resolve(account.marketplace as MarketplaceType);
+        const _decryptedAccessToken = this.encryption.decrypt(account.accessToken);
+        const _connector = this.connectorResolver.resolve(account.marketplace as MarketplaceType);
         
         this.logger.log(`Executing real API updates for product ${product.sku} using connector.`);
         

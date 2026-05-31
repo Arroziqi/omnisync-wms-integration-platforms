@@ -14,7 +14,7 @@ interface MarketplaceAccount {
 }
 
 function IntegrationsContent() {
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
   const [loading, setLoading] = useState(true);

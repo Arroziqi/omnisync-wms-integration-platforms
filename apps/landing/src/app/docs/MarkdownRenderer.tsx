@@ -19,7 +19,7 @@ export default function MarkdownRenderer({ content, slug }: MarkdownRendererProp
     // 1. Fenced Code Block Parser
     if (line.trim().startsWith('```')) {
       const lang = line.trim().slice(3).trim() || 'text';
-      let codeLines: string[] = [];
+      const codeLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].trim().startsWith('```')) {
         codeLines.push(lines[i]);
@@ -34,7 +34,7 @@ export default function MarkdownRenderer({ content, slug }: MarkdownRendererProp
 
     // 2. Alert / Blockquote Parser
     if (line.trim().startsWith('>')) {
-      let quoteLines: string[] = [];
+      const quoteLines: string[] = [];
       while (i < lines.length && lines[i].trim().startsWith('>')) {
         // Strip out the leading >
         const quoteContent = lines[i].trim().slice(1).trim();
@@ -43,7 +43,7 @@ export default function MarkdownRenderer({ content, slug }: MarkdownRendererProp
       }
 
       let type: 'note' | 'tip' | 'important' | 'warning' | 'default' = 'default';
-      let cleanLines = [...quoteLines];
+      const cleanLines = [...quoteLines];
       
       if (quoteLines.length > 0) {
         const firstLine = quoteLines[0].toUpperCase();
@@ -70,8 +70,8 @@ export default function MarkdownRenderer({ content, slug }: MarkdownRendererProp
 
     // 3. Table Parser
     if (line.trim().startsWith('|')) {
-      let tableRows: string[][] = [];
-      let isHeader = true;
+      const tableRows: string[][] = [];
+      const _isHeader = true;
       while (i < lines.length && lines[i].trim().startsWith('|')) {
         const rowLine = lines[i].trim();
         // Skip separator line | :--- | :--- |
@@ -116,7 +116,7 @@ export default function MarkdownRenderer({ content, slug }: MarkdownRendererProp
 
     // 4. Bullet & Numbered List Parser
     if (line.trim().startsWith('* ') || line.trim().startsWith('- ') || /^\d+\.\s/.test(line.trim())) {
-      let listItems: { text: string; isNumbered: boolean; num?: string }[] = [];
+      const listItems: { text: string; isNumbered: boolean; num?: string }[] = [];
       while (i < lines.length && (
         lines[i].trim().startsWith('* ') || 
         lines[i].trim().startsWith('- ') || 
@@ -534,8 +534,8 @@ function parseInline(text: string): React.ReactNode[] {
   
   // Format bold (**text**), inline code (`code`), and links ([text](url))
   // A simple tokenizer using split
-  const tokens: React.ReactNode[] = [];
-  let index = 0;
+  const _tokens: React.ReactNode[] = [];
+  const _index = 0;
   
   // Regex to match bold, code, links
   const regex = /(\*\*.*?\*\*|`.*?`|\[.*?\]\(.*?\))/g;

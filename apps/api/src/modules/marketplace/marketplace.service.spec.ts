@@ -18,7 +18,7 @@ describe('MarketplaceService', () => {
   let accountRepo: jest.Mocked<Repository<MarketplaceAccountEntity>>;
   let stateRepo: jest.Mocked<Repository<OAuthStateEntity>>;
   let encryptionService: jest.Mocked<EncryptionService>;
-  let resolver: jest.Mocked<MarketplaceConnectorResolver>;
+  let _resolver: jest.Mocked<MarketplaceConnectorResolver>;
 
   const mockConnector: jest.Mocked<IMarketplaceConnector> = {
     getAuthorizationUrl: jest.fn((state) => `https://mock.url?state=${state}`),

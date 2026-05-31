@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subject, Subscription } from 'rxjs';
@@ -137,7 +137,7 @@ export class InventorySyncQueueService implements OnModuleInit, OnModuleDestroy 
           await new Promise((resolve) => setTimeout(resolve, 300)); // Network simulation lag
         } else {
           // Real API Integration
-          const decryptedAccessToken = this.encryption.decrypt(account.accessToken);
+          const _decryptedAccessToken = this.encryption.decrypt(account.accessToken);
           this.logger.log(`Sending live stock update (${totalAvailable}) for SKU ${variant.variantSku} on ${account.marketplace} store ${account.sellerName}.`);
         }
 

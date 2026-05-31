@@ -7,7 +7,7 @@ import { FailedJobEntity, FailedJobStatus } from '../../database/entities/failed
 import { OrderSyncFailureEntity, SyncFailureStatus } from '../../database/entities/order-sync-failure.entity';
 import { MarketplaceAccountEntity, AccountStatus } from '../../database/entities/marketplace-account.entity';
 import { WebhookEventEntity, WebhookEventStatus } from '../../database/entities/webhook-event.entity';
-import { WebhookDeliveryLogEntity, DeliveryLogStatus } from '../../database/entities/webhook-delivery-log.entity';
+import { WebhookDeliveryLogEntity } from '../../database/entities/webhook-delivery-log.entity';
 
 export interface DashboardMetrics {
   orders: {
@@ -266,7 +266,7 @@ export class MonitoringService {
           order: { completedAt: 'DESC' },
         });
 
-        const { accessToken, refreshToken, ...publicFields } = acc as any;
+        const { _accessToken, _refreshToken, ...publicFields } = acc as any;
         return {
           ...publicFields,
           orderCount,

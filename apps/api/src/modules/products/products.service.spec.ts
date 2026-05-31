@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { ProductsService } from './products.service';
-import { ProductEntity, ProductStatus } from '../../database/entities/product.entity';
+import { ProductEntity } from '../../database/entities/product.entity';
 import { ProductVariantEntity } from '../../database/entities/product-variant.entity';
 import { MarketplaceProductEntity, SyncStatus } from '../../database/entities/marketplace-product.entity';
 import { ProductSyncQueueService } from './product-sync-queue.service';

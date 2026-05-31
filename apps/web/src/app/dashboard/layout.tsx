@@ -43,7 +43,7 @@ export default function DashboardLayout({
 
         const data = await response.json();
         setUser(data);
-      } catch (err) {
+      } catch (_err) {
         // Clear expired auth and redirect
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');

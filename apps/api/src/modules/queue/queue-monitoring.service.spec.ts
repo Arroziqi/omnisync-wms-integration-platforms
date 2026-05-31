@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { QueueMonitoringService } from './queue-monitoring.service';
-import { SyncJobEntity, SyncJobStatus } from '../../database/entities/sync-job.entity';
+import { SyncJobEntity } from '../../database/entities/sync-job.entity';
 import { FailedJobEntity, FailedJobStatus } from '../../database/entities/failed-job.entity';
 import { ORDER_SYNC_QUEUE } from './queue.constants';
 

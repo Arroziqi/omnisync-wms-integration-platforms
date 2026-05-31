@@ -43,7 +43,7 @@ interface Order {
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const id = params.id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
@@ -105,7 +105,7 @@ export default function OrderDetailPage() {
       } else {
         showToast(data.message || 'Failed to sync specific order.', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error syncing order.', 'error');
     } finally {
       setSyncing(false);

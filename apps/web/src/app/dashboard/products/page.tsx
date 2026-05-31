@@ -160,7 +160,7 @@ export default function ProductsPage() {
         const err = await res.json();
         showToast(err.message || 'Error creating master product', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error while creating product', 'error');
     }
   };
@@ -217,7 +217,7 @@ export default function ProductsPage() {
         const err = await res.json();
         showToast(err.message || 'Error linking mapping', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error while linking mapping', 'error');
     }
   };
@@ -235,7 +235,7 @@ export default function ProductsPage() {
       } else {
         showToast('Failed to trigger sync', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Sync request network error', 'error');
     }
   };

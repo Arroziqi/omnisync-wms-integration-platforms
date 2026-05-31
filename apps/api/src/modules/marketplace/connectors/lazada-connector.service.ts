@@ -61,7 +61,7 @@ export class LazadaConnectorService implements IMarketplaceConnector {
         sellerId: account || `lz_${Math.random().toString(36).substr(2, 9)}`,
         sellerName: `Lazada Seller (${country || 'SEA'})`,
       };
-    } catch (err) {
+    } catch (_err) {
       return this.simulateTokenExchange(code, 'lazada');
     }
   }
@@ -105,7 +105,7 @@ export class LazadaConnectorService implements IMarketplaceConnector {
         sellerId: account || `lz_refreshed`,
         sellerName: `Lazada Seller Refreshed (${country || 'SEA'})`,
       };
-    } catch (err) {
+    } catch (_err) {
       return this.simulateTokenRefresh(refreshToken, 'lazada');
     }
   }

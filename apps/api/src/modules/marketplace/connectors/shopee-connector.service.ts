@@ -58,7 +58,7 @@ export class ShopeeConnectorService implements IMarketplaceConnector {
         sellerId: shop_id?.toString() || `sh_${Math.random().toString(36).substr(2, 9)}`,
         sellerName: `Shopee Store ${shop_id || ''}`,
       };
-    } catch (err) {
+    } catch (_err) {
       return this.simulateTokenExchange(code, 'shopee');
     }
   }
@@ -96,7 +96,7 @@ export class ShopeeConnectorService implements IMarketplaceConnector {
         sellerId: shop_id?.toString() || `sh_refreshed`,
         sellerName: `Shopee Refreshed Store ${shop_id || ''}`,
       };
-    } catch (err) {
+    } catch (_err) {
       return this.simulateTokenRefresh(refreshToken, 'shopee');
     }
   }

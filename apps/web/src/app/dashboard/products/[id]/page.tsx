@@ -78,7 +78,7 @@ export default function ProductDetailPage() {
         showToast('Error retrieving product details', 'error');
         router.push('/dashboard/products');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error loading product details', 'error');
     }
   };
@@ -115,7 +115,7 @@ export default function ProductDetailPage() {
         showToast('Failed to trigger manual sync', 'error');
         setSyncing(false);
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error during sync execution', 'error');
       setSyncing(false);
     }
@@ -148,7 +148,7 @@ export default function ProductDetailPage() {
         const err = await res.json();
         showToast(err.message || 'Error creating variant', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error creating variant', 'error');
     }
   };

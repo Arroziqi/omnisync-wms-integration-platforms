@@ -109,8 +109,8 @@ export class AuthService {
     }
 
     // Strip password hash before returning
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, ...safeUser } = user;
+     
+    const { _passwordHash, ...safeUser } = user;
     return {
       ...(safeUser as Omit<UserEntity, 'passwordHash'>),
       permissions,

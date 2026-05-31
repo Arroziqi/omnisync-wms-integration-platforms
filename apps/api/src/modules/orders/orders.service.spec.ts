@@ -12,7 +12,7 @@ import { OrderSyncQueueService } from './order-sync-queue.service';
 describe('OrdersService', () => {
   let service: OrdersService;
   let orderRepo: jest.Mocked<Repository<OrderEntity>>;
-  let itemRepo: jest.Mocked<Repository<OrderItemEntity>>;
+  let _itemRepo: jest.Mocked<Repository<OrderItemEntity>>;
   let accountRepo: jest.Mocked<Repository<MarketplaceAccountEntity>>;
   let failureRepo: jest.Mocked<Repository<OrderSyncFailureEntity>>;
   let syncQueue: jest.Mocked<OrderSyncQueueService>;

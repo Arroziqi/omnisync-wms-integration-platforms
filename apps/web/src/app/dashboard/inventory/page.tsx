@@ -158,7 +158,7 @@ export default function InventoryPage() {
       } else {
         showToast('Failed to load stock levels', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error loading inventory data', 'error');
     } finally {
       setLoading(false);
@@ -223,7 +223,7 @@ export default function InventoryPage() {
         const err = await res.json();
         showToast(err.message || 'Deduction/Addition failed', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error during adjustment', 'error');
     }
   };
@@ -261,7 +261,7 @@ export default function InventoryPage() {
         const err = await res.json();
         showToast(err.message || 'Transfer failed', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error during transfer', 'error');
     }
   };
@@ -671,7 +671,7 @@ export default function InventoryPage() {
                   ) : (
                     movements.map((log) => {
                       const isPositive = log.quantityDelta > 0;
-                      let typeLabel = log.type.toUpperCase();
+                      const typeLabel = log.type.toUpperCase();
                       return (
                         <tr key={log.id}>
                           <td>{new Date(log.createdAt).toLocaleString()}</td>

@@ -24,7 +24,7 @@ import { PermissionsGuard } from './guards/permissions.guard';
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('jwt.secret'),
         signOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           expiresIn: (config.get<string>('jwt.accessTokenExpiresIn') ?? '15m') as any,
         },
       }),

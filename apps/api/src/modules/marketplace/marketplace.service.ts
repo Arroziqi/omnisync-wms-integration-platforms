@@ -56,7 +56,7 @@ export class MarketplaceService implements OnModuleInit {
   /**
    * Generates a temporary state token and the redirection URL for OAuth connection.
    */
-  async connect(marketplace: string, userId: string): Promise<{ url: string; state: string }> {
+  async connect(marketplace: string, _userId: string): Promise<{ url: string; state: string }> {
     const cleanMarketplace = marketplace.toLowerCase();
     if (
       cleanMarketplace !== MarketplaceType.TIKTOK &&
@@ -172,7 +172,7 @@ export class MarketplaceService implements OnModuleInit {
     const finalAccounts = hasChanges ? await this.accountRepo.find() : accounts;
     return finalAccounts.map((acc) => {
       // Omit tokens to prevent exposing encrypted payloads to the client
-      const { accessToken, refreshToken, ...publicFields } = acc;
+      const { _accessToken, _refreshToken, ...publicFields } = acc;
       return publicFields;
     });
   }
@@ -198,7 +198,7 @@ export class MarketplaceService implements OnModuleInit {
 
     await this.accountRepo.save(account);
 
-    const { accessToken, refreshToken, ...publicFields } = account;
+    const { _accessToken, _refreshToken, ...publicFields } = account;
     return publicFields;
   }
 
@@ -240,7 +240,7 @@ export class MarketplaceService implements OnModuleInit {
       }
       
       return { active };
-    } catch (err) {
+    } catch (_err) {
       return { active: false };
     }
   }
@@ -320,7 +320,7 @@ export class MarketplaceService implements OnModuleInit {
         if (!active) {
           unhealthyCount++;
         }
-      } catch (err) {
+      } catch (_err) {
         unhealthyCount++;
       }
     }

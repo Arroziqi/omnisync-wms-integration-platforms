@@ -84,7 +84,7 @@ export default function WarehousesPage() {
         const err = await res.json();
         showToast(err.message || 'Error creating warehouse', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error while creating warehouse', 'error');
     }
   };
@@ -118,7 +118,7 @@ export default function WarehousesPage() {
         const err = await res.json();
         showToast(err.message || 'Error updating warehouse', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error while updating warehouse', 'error');
     }
   };
@@ -141,7 +141,7 @@ export default function WarehousesPage() {
       } else {
         showToast('Failed to toggle warehouse active state', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error on state toggle', 'error');
     }
   };

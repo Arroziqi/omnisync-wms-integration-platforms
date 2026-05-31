@@ -190,7 +190,7 @@ export default function OrdersPage() {
       } else {
         showToast(data.message || 'Failed to trigger bulk synchronization.', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error enqueuing synchronization.', 'error');
     } finally {
       setSyncing(false);
@@ -217,7 +217,7 @@ export default function OrdersPage() {
       } else {
         showToast(data.message || 'Failed to sync specific order.', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error syncing order.', 'error');
     }
   };
@@ -243,7 +243,7 @@ export default function OrdersPage() {
       } else {
         showToast(data.message || 'Failed to retry order resync.', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error retrying sync.', 'error');
     } finally {
       setRetryingFailedId(null);
@@ -269,7 +269,7 @@ export default function OrdersPage() {
       } else {
         showToast(data.message || 'Failed to trigger bulk recovery.', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('Network error triggering bulk recovery.', 'error');
     } finally {
       setRetryingAllFailed(false);

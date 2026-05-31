@@ -5,15 +5,15 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { WarehouseEntity } from '../../database/entities/warehouse.entity';
 import { InventoryEntity } from '../../database/entities/inventory.entity';
-import { InventoryMovementEntity, MovementType } from '../../database/entities/inventory-movement.entity';
+import { InventoryMovementEntity } from '../../database/entities/inventory-movement.entity';
 import { ProductVariantEntity } from '../../database/entities/product-variant.entity';
 import { InventorySyncQueueService } from './inventory-sync-queue.service';
 
 describe('InventoryService', () => {
   let service: InventoryService;
   let warehouseRepo: jest.Mocked<Repository<WarehouseEntity>>;
-  let inventoryRepo: jest.Mocked<Repository<InventoryEntity>>;
-  let movementRepo: jest.Mocked<Repository<InventoryMovementEntity>>;
+  let _inventoryRepo: jest.Mocked<Repository<InventoryEntity>>;
+  let _movementRepo: jest.Mocked<Repository<InventoryMovementEntity>>;
   let variantRepo: jest.Mocked<Repository<ProductVariantEntity>>;
   let syncQueue: jest.Mocked<InventorySyncQueueService>;
   

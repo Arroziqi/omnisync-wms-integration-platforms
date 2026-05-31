@@ -14,8 +14,8 @@ describe('ProductSyncService', () => {
   let productRepo: jest.Mocked<Repository<ProductEntity>>;
   let mappingRepo: jest.Mocked<Repository<MarketplaceProductEntity>>;
   let accountRepo: jest.Mocked<Repository<MarketplaceAccountEntity>>;
-  let resolver: jest.Mocked<MarketplaceConnectorResolver>;
-  let encryption: jest.Mocked<EncryptionService>;
+  let _resolver: jest.Mocked<MarketplaceConnectorResolver>;
+  let _encryption: jest.Mocked<EncryptionService>;
 
   beforeEach(async () => {
     const mockProductRepo = {

@@ -30,8 +30,8 @@ export class UsersService {
     });
 
     return users.map((user) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { passwordHash, ...safeUser } = user;
+       
+      const { _passwordHash, ...safeUser } = user;
       return safeUser as Omit<UserEntity, 'passwordHash'>;
     });
   }
@@ -46,8 +46,8 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, ...safeUser } = user;
+     
+    const { _passwordHash, ...safeUser } = user;
     return safeUser as Omit<UserEntity, 'passwordHash'>;
   }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export default function IndexPage() {
-  const [mounted, setMounted] = useState(false);
+  const [_mounted, setMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
