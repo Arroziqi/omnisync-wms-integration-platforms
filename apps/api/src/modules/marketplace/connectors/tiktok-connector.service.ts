@@ -23,12 +23,8 @@ export class TikTokConnectorService implements IMarketplaceConnector {
   }
 
   async exchangeCodeForTokens(code: string): Promise<MarketplaceTokens> {
-    // If we're using mock / development placeholders, bypass and return simulated tokens
-    if (code === 'invalid-code') {
-      throw new Error('TikTok authorization failed: Invalid code');
-    }
-    if (this.appKey === 'your-tiktok-app-key' || !this.appSecret || code.startsWith('mock-')) {
-      return this.simulateTokenExchange(code, 'tiktok');
+    if (!this.appKey || !this.appSecret) {
+      throw new Error('TikTok app credentials are not configured');
     }
 
     try {
@@ -53,18 +49,14 @@ export class TikTokConnectorService implements IMarketplaceConnector {
         sellerId: data.seller_id || `tt_${Math.random().toString(36).substr(2, 9)}`,
         sellerName: data.seller_name || 'TikTok Seller Partner',
       };
-    } catch (_err) {
-      // Fallback to simulation in local test environments if API throws network error
-      return this.simulateTokenExchange(code, 'tiktok');
+    } catch (err: any) {
+      throw new Error(err.message || 'Failed to exchange token with TikTok');
     }
   }
 
   async refreshTokens(refreshToken: string): Promise<MarketplaceTokens> {
-    if (refreshToken === 'invalid-refresh-token') {
-      throw new Error('TikTok token refresh failed: Invalid refresh token');
-    }
-    if (this.appKey === 'your-tiktok-app-key' || !this.appSecret || refreshToken.startsWith('mock-')) {
-      return this.simulateTokenRefresh(refreshToken, 'tiktok');
+    if (!this.appKey || !this.appSecret) {
+      throw new Error('TikTok app credentials are not configured');
     }
 
     try {
@@ -89,17 +81,14 @@ export class TikTokConnectorService implements IMarketplaceConnector {
         sellerId: data.seller_id || `tt_refreshed`,
         sellerName: data.seller_name || 'TikTok Seller Refreshed',
       };
-    } catch (_err) {
-      return this.simulateTokenRefresh(refreshToken, 'tiktok');
+    } catch (err: any) {
+      throw new Error(err.message || 'Failed to refresh token with TikTok');
     }
   }
 
   async getAccountHealth(accessToken: string): Promise<boolean> {
-    if (accessToken === 'invalid-access-token') {
+    if (!this.appKey || !this.appSecret) {
       return false;
-    }
-    if (accessToken.startsWith('mock-')) {
-      return true;
     }
 
     try {
@@ -111,27 +100,9 @@ export class TikTokConnectorService implements IMarketplaceConnector {
       });
       return response.data.code === 0;
     } catch {
-      return true; // Return true as mock health status on connection failure
+      return false;
     }
   }
 
-  private simulateTokenExchange(code: string, prefix: string): MarketplaceTokens {
-    return {
-      accessToken: `mock-access-${prefix}-${Math.random().toString(36).substr(2, 10)}`,
-      refreshToken: `mock-refresh-${prefix}-${Math.random().toString(36).substr(2, 10)}`,
-      expiresIn: 86400, // 24 hours
-      sellerId: `${prefix}_seller_${Math.floor(1000 + Math.random() * 9000)}`,
-      sellerName: `${prefix.toUpperCase()} Store ${code.substr(0, 5)}`,
-    };
-  }
 
-  private simulateTokenRefresh(refreshToken: string, prefix: string): MarketplaceTokens {
-    return {
-      accessToken: `mock-access-refreshed-${prefix}-${Math.random().toString(36).substr(2, 10)}`,
-      refreshToken: `mock-refresh-refreshed-${prefix}-${Math.random().toString(36).substr(2, 10)}`,
-      expiresIn: 86400,
-      sellerId: `${prefix}_seller_refreshed`,
-      sellerName: `${prefix.toUpperCase()} Refreshed Store`,
-    };
-  }
 }

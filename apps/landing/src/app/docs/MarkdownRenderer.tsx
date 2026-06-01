@@ -161,7 +161,7 @@ export default function MarkdownRenderer({ content, slug }: MarkdownRendererProp
       if (match) {
         const level = match[1].length;
         const headingText = match[2];
-        const HeadingTag = `h${level + 1}` as keyof JSX.IntrinsicElements; // shift heading levels down
+        const HeadingTag = `h${level + 1}` as keyof React.JSX.IntrinsicElements; // shift heading levels down
         
         blocks.push(
           <React.Fragment key={`heading-${i}`}>
@@ -222,7 +222,7 @@ export default function MarkdownRenderer({ content, slug }: MarkdownRendererProp
       </div>
       
       {/* Styles for rendered elements */}
-      <style jsx global>{`
+      <style>{`
         .doc-reader-container {
           display: flex;
           flex-direction: column;

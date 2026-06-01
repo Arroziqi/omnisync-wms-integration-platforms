@@ -228,7 +228,7 @@ export default function DocsLayout({
       </footer>
 
       {/* Styled JSX */}
-      <style jsx>{`
+      <style>{`
         .docs-page-container {
           min-height: 100vh;
           background-color: #05070f;

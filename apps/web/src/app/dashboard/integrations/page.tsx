@@ -346,22 +346,22 @@ function IntegrationsContent() {
                 <span className="connect-link">Connect &rarr;</span>
               </div>
 
-              <div className="connector-btn shopee-theme" onClick={() => handleConnect('shopee')}>
-                <div className="brand-logo bg-shopee">S</div>
+              <div className="connector-btn shopee-theme disabled-connector" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                <div className="brand-logo bg-shopee" style={{ filter: 'grayscale(100%)' }}>S</div>
                 <div className="brand-info">
                   <span className="brand-name">Shopee</span>
                   <span className="brand-status">Open Platform API</span>
                 </div>
-                <span className="connect-link">Connect &rarr;</span>
+                <span className="connect-link text-warning" style={{ fontSize: '0.8rem' }}>Under Maintenance</span>
               </div>
 
-              <div className="connector-btn lazada-theme" onClick={() => handleConnect('lazada')}>
-                <div className="brand-logo bg-lazada">L</div>
+              <div className="connector-btn lazada-theme disabled-connector" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                <div className="brand-logo bg-lazada" style={{ filter: 'grayscale(100%)' }}>L</div>
                 <div className="brand-info">
                   <span className="brand-name">Lazada</span>
                   <span className="brand-status">Seller Center REST</span>
                 </div>
-                <span className="connect-link">Connect &rarr;</span>
+                <span className="connect-link text-warning" style={{ fontSize: '0.8rem' }}>Under Maintenance</span>
               </div>
             </div>
           </div>
